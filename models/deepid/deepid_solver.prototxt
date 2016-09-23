@@ -1,0 +1,25 @@
+# The train/test net protocol buffer definition
+net: "models/deepid/train_val.prototxt"
+# test_iter specifies how many forward passes the test should carry out.
+test_iter: 261
+# Carry out testing every 500 training iterations.
+test_interval: 1000
+# The base learning rate, momentum and the weight decay of the network.
+base_lr: 1e-2
+momentum: 0.9
+weight_decay: 5e-3
+# The learning rate policy
+lr_policy: "step"
+stepsize: 5000
+gamma: 0.5
+# power: 0.75
+# Display every 100 iterations
+display: 100
+# The maximum number of iterations
+max_iter: 40000
+test_initialization: false
+# snapshot intermediate results
+snapshot: 40000
+snapshot_prefix: "models/deepid/deepid"
+# solver mode: CPU or GPU
+solver_mode: GPU
