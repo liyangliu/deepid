@@ -4,7 +4,7 @@
 set -e
 
 # EXAMPLE=examples/deepid
-DATA=data/CASIA/144x144
+DATA=data/CASIA/224x224
 TOOLS=build/tools
 
 DATA_ROOT=/home/lly/grq/deepface/CASIA_CROP_JD_144x144/
@@ -13,11 +13,11 @@ VAL_TXT_PATH=/home/lly/grq/deepface
 
 # Set RESIZE=true to resize the images to 256x256. Leave as false if images have
 # already been resized using another tool.
-RESIZE=false
+RESIZE=true
 
 if $RESIZE; then
-  RESIZE_HEIGHT=55
-  RESIZE_WIDTH=55
+  RESIZE_HEIGHT=224
+  RESIZE_WIDTH=224
 else
   RESIZE_HEIGHT=0
   RESIZE_WIDTH=0
