@@ -17,7 +17,7 @@ def parse_args():
                         default = 'train_val.prototxt')
     parser.add_argument('--block_number', nargs='*',
                         help=('Block number for each stage.'),
-                        default=[3, 4, 6, 3])
+                        default=[1, 1, 1])
     parser.add_argument('--type', type=int,
                         help=('0 for deploy.prototxt, 1 for train_val.prototxt.'),
                         default=1)
@@ -230,6 +230,19 @@ def generate_activation_layer(layer_name, bottom, top, act_type="ReLU"):
 '''%(layer_name, act_type, bottom, top)
     return act_layer_str
 
+def generate_dropout_layer(bottom, drop_ratio=0.5):
+    drop_layer_str = '''layer {
+  name: "dropout"
+  type: "Dropout"
+  bottom: "%s"
+  top: "%s"
+  dropout_param {
+    dropout_ratio: %0.1f
+  }
+}
+'''%(bottom, bottom, drop_ratio)
+    return drop_layer_str
+
 def generate_softmax_loss(bottom):
     softmax_loss_str = '''layer {
   name: "loss"
@@ -260,7 +273,6 @@ def get_layer_name(stage, block, layer, relu_sum):
     elif relu_sum == 2:
       return layer_name[:-1]+'sum'
 
-
 def generate_train_val_stage(stage, kernel_num, last_top, network_str, args):
     b = 1
 
@@ -285,7 +297,7 @@ def generate_train_val_stage(stage, kernel_num, last_top, network_str, args):
     network_str += generate_activation_layer(relu_layer_name, sum_layer_name, sum_layer_name, 'ReLU')
     last_top = sum_layer_name
 
-    for b in xrange(2, args.block_number[1]+1):
+    for b in xrange(2, args.block_number[stage-1]+1):
         l = 1
         conv_layer_name = get_layer_name(stage, b, l, 0)
         relu_layer_name = get_layer_name(stage, b, l, 1)
@@ -308,27 +320,31 @@ def generate_train_val(num_class, args, data_root, data_name, batch_size):
     network_str = generate_data_layer(data_root, data_name, batch_size)
     '''before stage'''
     last_top = 'data'
-    network_str += generate_conv_bn_scale_layer(7, 64, 2, 3, 'conv1', last_top, 'conv1')
+
+    kernel_num = 20
+    network_str += generate_conv_bn_scale_layer(3, kernel_num, 2, 1, 'conv1', last_top, 'conv1')
     network_str += generate_activation_layer('conv1_relu', 'conv1', 'conv1', 'ReLU')
-    network_str += generate_pooling_layer(3, 2, 'MAX', 'pool1', 'conv1', 'pool1')
+    # network_str += generate_pooling_layer(3, 2, 'MAX', 'pool1', 'conv1', 'pool1')
     '''stage 1'''
-    last_top = 'pool1'
+    last_top = 'conv1'
     for b in xrange(1, args.block_number[0]+1):
-        network_str += generate_conv_bn_scale_layer(3, 64, 1, 1, 'conv2_%d_1'%b, last_top, 'conv2_%d_1'%b)
+        network_str += generate_conv_bn_scale_layer(3, kernel_num, 1, 1, 'conv2_%d_1'%b, last_top, 'conv2_%d_1'%b)
         network_str += generate_activation_layer('conv2_%d_1_relu'%b, 'conv2_%d_1'%b, 'conv2_%d_1'%b, 'ReLU')
 
-        network_str += generate_conv_bn_scale_layer(3, 64, 1, 1, 'conv2_%d_2'%b, 'conv2_%d_1'%b, 'conv2_%d_2'%b)
+        network_str += generate_conv_bn_scale_layer(3, kernel_num, 1, 1, 'conv2_%d_2'%b, 'conv2_%d_1'%b, 'conv2_%d_2'%b)
 
         network_str += generate_eltwise_layer('conv2_%d_sum'%b, last_top, 'conv2_%d_2'%b, 'conv2_%d_sum'%b, 'SUM')
         network_str += generate_activation_layer('conv2_%d_2_relu'%b, 'conv2_%d_sum'%b, 'conv2_%d_sum'%b, 'ReLU')
         last_top = 'conv2_%d_sum'%b
 
-    network_str, last_top = generate_train_val_stage(2, 128, last_top, network_str, args)
-    network_str, last_top = generate_train_val_stage(3, 256, last_top, network_str, args)
-    network_str, last_top = generate_train_val_stage(4, 512, last_top, network_str, args)
+    for s in range(1, len(args.block_number)):
+        kernel_num *= 2
+        network_str, last_top = generate_train_val_stage(s + 1, kernel_num, last_top, network_str, args)
 
-    network_str += generate_pooling_layer(7, 1, 'AVE', 'pool2', last_top, 'pool2')
-    network_str += generate_fc_layer(num_class, 'fc', 'pool2', 'fc', 'gaussian')
+    # network_str += generate_pooling_layer(7, 1, 'AVE', 'pool2', last_top, 'pool2')
+    network_str += generate_fc_layer(kernel_num * 2, 'feature', last_top, 'feature', 'gaussian')
+    network_str += generate_dropout_layer('feature')
+    network_str += generate_fc_layer(num_class, 'fc', 'feature', 'fc', 'gaussian')
     network_str += generate_softmax_loss('fc')
     return network_str
 
@@ -337,7 +353,7 @@ def generate_solver(train_val, batch_size, num_imgs):
 test_iter: %d
 test_interval: 1000
 test_initialization: true
-display: 10
+display: 100
 base_lr: 0.1
 lr_policy: "step"
 stepsize: 10000
@@ -352,10 +368,10 @@ solver_mode: GPU'''%(train_val, num_imgs//(batch_size*4) + 1, )
 
 def main():
     args = parse_args()
-    data_root = 'data/CASIA/224x224'
+    data_root = 'data/CASIA'
     data_name = 'CASIA'
-    batch_size = 64
-    num_imgs = 97270
+    batch_size = 256
+    num_imgs = 133342
     num_class = 9727
     train_val = 'models/deepid/resnet/train_val.prototxt'
     solver = 'models/deepid/resnet/solver.prototxt'
