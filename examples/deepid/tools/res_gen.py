@@ -273,6 +273,26 @@ def get_layer_name(stage, block, layer, relu_sum):
     elif relu_sum == 2:
       return layer_name[:-1]+'sum'
 
+def generate_train_val_1st_stage(kernel_num, last_top, network_str, args):
+    for b in xrange(1, args.block_number[0]+1):
+        l = 1
+        conv_layer_name = get_layer_name(1, b, l, 0)
+        relu_layer_name = get_layer_name(1, b, l, 1)
+        network_str += generate_conv_bn_scale_layer(3, kernel_num, 1, 1, conv_layer_name, last_top, conv_layer_name)
+        network_str += generate_activation_layer(relu_layer_name, conv_layer_name, conv_layer_name, 'ReLU')
+
+        l = 2
+        conv_layer_name_bottom = conv_layer_name
+        conv_layer_name = get_layer_name(1, b, l, 0)
+        relu_layer_name = get_layer_name(1, b, l, 1)
+        sum_layer_name = get_layer_name(1, b, l, 2)
+        network_str += generate_conv_bn_scale_layer(3, kernel_num, 1, 1, conv_layer_name, conv_layer_name_bottom, conv_layer_name)
+
+        network_str += generate_eltwise_layer(sum_layer_name, last_top, conv_layer_name, sum_layer_name, 'SUM')
+        network_str += generate_activation_layer(relu_layer_name, sum_layer_name, sum_layer_name, 'ReLU')
+        last_top = sum_layer_name
+    return network_str, last_top
+
 def generate_train_val_stage(stage, kernel_num, last_top, network_str, args):
     b = 1
 
@@ -318,29 +338,24 @@ def generate_train_val_stage(stage, kernel_num, last_top, network_str, args):
 
 def generate_train_val(num_class, args, data_root, data_name, batch_size):
     network_str = generate_data_layer(data_root, data_name, batch_size)
-    '''before stage'''
     last_top = 'data'
 
+    '''before stage'''
     kernel_num = 20
     network_str += generate_conv_bn_scale_layer(3, kernel_num, 2, 1, 'conv1', last_top, 'conv1')
     network_str += generate_activation_layer('conv1_relu', 'conv1', 'conv1', 'ReLU')
     # network_str += generate_pooling_layer(3, 2, 'MAX', 'pool1', 'conv1', 'pool1')
-    '''stage 1'''
     last_top = 'conv1'
-    for b in xrange(1, args.block_number[0]+1):
-        network_str += generate_conv_bn_scale_layer(3, kernel_num, 1, 1, 'conv2_%d_1'%b, last_top, 'conv2_%d_1'%b)
-        network_str += generate_activation_layer('conv2_%d_1_relu'%b, 'conv2_%d_1'%b, 'conv2_%d_1'%b, 'ReLU')
 
-        network_str += generate_conv_bn_scale_layer(3, kernel_num, 1, 1, 'conv2_%d_2'%b, 'conv2_%d_1'%b, 'conv2_%d_2'%b)
+    '''stage 1'''
+    network_str, last_top = generate_train_val_1st_stage(kernel_num, last_top, network_str, args)
 
-        network_str += generate_eltwise_layer('conv2_%d_sum'%b, last_top, 'conv2_%d_2'%b, 'conv2_%d_sum'%b, 'SUM')
-        network_str += generate_activation_layer('conv2_%d_2_relu'%b, 'conv2_%d_sum'%b, 'conv2_%d_sum'%b, 'ReLU')
-        last_top = 'conv2_%d_sum'%b
-
+    '''stage 2...'''
     for s in range(1, len(args.block_number)):
         kernel_num *= 2
         network_str, last_top = generate_train_val_stage(s + 1, kernel_num, last_top, network_str, args)
 
+    '''after stage'''
     # network_str += generate_pooling_layer(7, 1, 'AVE', 'pool2', last_top, 'pool2')
     network_str += generate_fc_layer(kernel_num * 2, 'feature', last_top, 'feature', 'gaussian')
     network_str += generate_dropout_layer('feature')
@@ -352,16 +367,16 @@ def generate_solver(train_val, batch_size, num_imgs):
     solver_str = '''net: "%s"
 test_iter: %d
 test_interval: 1000
-test_initialization: true
+test_initialization: false
 display: 100
 base_lr: 0.1
 lr_policy: "step"
 stepsize: 10000
-gamma: 0.5
-max_iter: 80000
+gamma: 0.1
+max_iter: 30000
 momentum: 0.9
 weight_decay: 0.0001
-snapshot: 80000
+snapshot: 30000
 snapshot_prefix: "models/deepid/resnet/resnet"
 solver_mode: GPU'''%(train_val, num_imgs//(batch_size*4) + 1, )
     return solver_str
