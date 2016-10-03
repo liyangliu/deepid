@@ -2,9 +2,9 @@
 # Create the CASIA train set mean binaryproto
 set -e
 
-DATA=data/CASIA/CASIA_train_lmdb
+DATA=data/YTF/YTF_112x112_train_lmdb
 TOOLS=build/tools
-MEANFILE=data/CASIA/CASIA_mean.binaryproto
+MEANFILE=data/YTF/YTF_112x112_mean.binaryproto
 
 echo "Computing train set mean..."
 

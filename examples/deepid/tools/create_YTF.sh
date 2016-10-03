@@ -4,20 +4,20 @@
 set -e
 
 # EXAMPLE=examples/deepid
-DATA=data/CASIA/224x224
+DATA=data/YTF
 TOOLS=build/tools
 
-DATA_ROOT=/home/lly/grq/deepface/CASIA_CROP_JD_144x144/
-TRAIN_TXT_PATH=/home/lly/grq/deepface
-VAL_TXT_PATH=/home/lly/grq/deepface
+DATA_ROOT=data/YTF/
+TRAIN_TXT_PATH=data/YTF/aux
+VAL_TXT_PATH=data/YTF/aux
 
 # Set RESIZE=true to resize the images to 256x256. Leave as false if images have
 # already been resized using another tool.
 RESIZE=true
 
 if $RESIZE; then
-  RESIZE_HEIGHT=224
-  RESIZE_WIDTH=224
+  RESIZE_HEIGHT=56
+  RESIZE_WIDTH=56
 else
   RESIZE_HEIGHT=0
   RESIZE_WIDTH=0
@@ -25,15 +25,15 @@ fi
 
 if [ ! -d "$DATA_ROOT" ]; then
   echo "Error: TRAIN_DATA_ROOT is not a path to a directory: $TRAIN_DATA_ROOT"
-  echo "Set the TRAIN_DATA_ROOT variable in create_CASIA.sh to the path" \
-       "where the CASIA training data is stored."
+  echo "Set the TRAIN_DATA_ROOT variable in create_YTF.shto the path" \
+       "where the YTF training data is stored."
   exit 1
 fi
 
 if [ ! -d "$DATA_ROOT" ]; then
   echo "Error: VAL_DATA_ROOT is not a path to a directory: $VAL_DATA_ROOT"
-  echo "Set the VAL_DATA_ROOT variable in create_CASIA.sh to the path" \
-       "where the CASIA validation data is stored."
+  echo "Set the VAL_DATA_ROOT variable in create_YTF.sh to the path" \
+       "where the YTF validation data is stored."
   exit 1
 fi
 
@@ -45,7 +45,7 @@ GLOG_logtostderr=1 $TOOLS/convert_imageset \
     --shuffle \
     $DATA_ROOT \
     $TRAIN_TXT_PATH/train.txt \
-    $DATA/CASIA_train_lmdb
+    $DATA/YTF_56x56_train_lmdb
 
 echo "Creating val lmdb..."
 
@@ -55,6 +55,6 @@ GLOG_logtostderr=1 $TOOLS/convert_imageset \
     --shuffle \
     $DATA_ROOT \
     $VAL_TXT_PATH/val.txt \
-    $DATA/CASIA_val_lmdb
+    $DATA/YTF_56x56_val_lmdb
 
 echo "Done."

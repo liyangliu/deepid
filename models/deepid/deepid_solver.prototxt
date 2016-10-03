@@ -1,8 +1,8 @@
 # The train/test net protocol buffer definition
 net: "models/deepid/train_val.prototxt"
 # test_iter specifies how many forward passes the test should carry out.
-test_iter: 261
-# Carry out testing every 500 training iterations.
+test_iter: 121
+# Carry out testing every 1000 training iterations.
 test_interval: 1000
 # The base learning rate, momentum and the weight decay of the network.
 base_lr: 1e-2

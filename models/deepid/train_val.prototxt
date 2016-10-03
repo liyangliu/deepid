@@ -5,12 +5,12 @@ layer {
   top: "label"
   type: "Data"
   data_param {
-    source: "data/CASIA/CASIA_train_lmdb"
+    source: "data/YTF/YTF_56x56_train_lmdb"
     backend: LMDB
     batch_size: 128
   }
   transform_param {
-    mean_file: "data/CASIA/CASIA_mean.binaryproto"
+    mean_file: "data/YTF/YTF_56x56_mean.binaryproto"
   }
   include {
     phase: TRAIN
@@ -22,12 +22,12 @@ layer {
   top: "label"
   type: "Data"
   data_param {
-    source: "data/CASIA/CASIA_val_lmdb"
+    source: "data/YTF/YTF_56x56_val_lmdb"
     backend: LMDB
     batch_size: 128 
   }
   transform_param {
-    mean_file: "data/CASIA/CASIA_mean.binaryproto"
+    mean_file: "data/YTF/YTF_56x56_mean.binaryproto"
   }
   include {
     phase: TEST
@@ -501,7 +501,7 @@ layer {
     decay_mult: 0
   }
   inner_product_param {
-    num_output: 9727
+    num_output: 1650
     weight_filler {
       type: "gaussian"
       std: 0.01

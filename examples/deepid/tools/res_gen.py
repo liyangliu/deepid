@@ -25,7 +25,7 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-def generate_data_layer(data_root, data_name, batch_size):
+def generate_data_layer(data_root, data_name, batch_size, pix):
     data_layer_str = '''name: "ResNet"
 layer {
   name: "data"
@@ -37,10 +37,10 @@ layer {
   }
   transform_param {
     mirror: true
-    mean_file: "%s/%s_mean.binaryproto"
+    mean_file: "%s/%s_%sx%s_mean.binaryproto"
   }
   data_param {
-    source: "%s/%s_train_lmdb"
+    source: "%s/%s_%sx%s_train_lmdb"
     batch_size: %d
     backend: LMDB
   }
@@ -55,15 +55,15 @@ layer {
   }
   transform_param {
     mirror: false
-    mean_file: "%s/%s_mean.binaryproto"
+    mean_file: "%s/%s_%sx%s_mean.binaryproto"
   }
   data_param {
-    source: "%s/%s_val_lmdb"
+    source: "%s/%s_%sx%s_val_lmdb"
     batch_size: %d
     backend: LMDB
   }
 }
-'''%(data_root, data_name, data_root, data_name, batch_size, data_root, data_name, data_root, data_name, batch_size)
+'''%(data_root, data_name, pix, pix, data_root, data_name, pix, pix, batch_size, data_root, data_name, pix, pix, data_root, data_name, pix, pix, batch_size)
     return data_layer_str
 
 def generate_conv_layer(kernel_size, kernel_num, stride, pad, layer_name, bottom, top, filler="xavier"):
@@ -336,8 +336,8 @@ def generate_train_val_stage(stage, kernel_num, last_top, network_str, args):
         last_top = sum_layer_name
     return network_str, last_top
 
-def generate_train_val(num_class, args, data_root, data_name, batch_size):
-    network_str = generate_data_layer(data_root, data_name, batch_size)
+def generate_train_val(num_class, args, data_root, data_name, batch_size, pix):
+    network_str = generate_data_layer(data_root, data_name, batch_size, pix)
     last_top = 'data'
 
     '''before stage'''
@@ -373,25 +373,26 @@ base_lr: 0.1
 lr_policy: "step"
 stepsize: 10000
 gamma: 0.1
-max_iter: 30000
+max_iter: 40000
 momentum: 0.9
 weight_decay: 0.0001
-snapshot: 30000
+snapshot: 40000
 snapshot_prefix: "models/deepid/resnet/resnet"
 solver_mode: GPU'''%(train_val, num_imgs//(batch_size*4) + 1, )
     return solver_str
 
 def main():
     args = parse_args()
-    data_root = 'data/CASIA'
-    data_name = 'CASIA'
+    data_root = 'data/YTF'
+    data_name = 'YTF'
+    pix = '56'
     batch_size = 256
-    num_imgs = 133342
-    num_class = 9727
+    num_imgs = 61546
+    num_class = 1650
     train_val = 'models/deepid/resnet/train_val.prototxt'
     solver = 'models/deepid/resnet/solver.prototxt'
     solver_str = generate_solver(train_val, batch_size, num_imgs)
-    network_str = generate_train_val(num_class, args, data_root, data_name, batch_size)
+    network_str = generate_train_val(num_class, args, data_root, data_name, batch_size, pix)
     fp = open(solver, 'w')
     fp.write(solver_str)
     fp.close()
