@@ -37,10 +37,10 @@ layer {
   }
   transform_param {
     mirror: true
-    mean_file: "%s/%s_%sx%s_mean.binaryproto"
+    mean_file: "%s/%s_%dx%d_mean.binaryproto"
   }
   data_param {
-    source: "%s/%s_%sx%s_train_lmdb"
+    source: "%s/%s_%dx%d_train_lmdb"
     batch_size: %d
     backend: LMDB
   }
@@ -55,10 +55,10 @@ layer {
   }
   transform_param {
     mirror: false
-    mean_file: "%s/%s_%sx%s_mean.binaryproto"
+    mean_file: "%s/%s_%dx%d_mean.binaryproto"
   }
   data_param {
-    source: "%s/%s_%sx%s_val_lmdb"
+    source: "%s/%s_%dx%d_val_lmdb"
     batch_size: %d
     backend: LMDB
   }
@@ -378,16 +378,16 @@ momentum: 0.9
 weight_decay: 0.0001
 snapshot: 40000
 snapshot_prefix: "models/deepid/resnet/resnet"
-solver_mode: GPU'''%(train_val, num_imgs//(batch_size*4) + 1, )
+solver_mode: GPU'''%(train_val, num_imgs//(batch_size*4) + 1)
     return solver_str
 
 def main():
     args = parse_args()
     data_root = 'data/YTF'
     data_name = 'YTF'
-    pix = '56'
+    pix = 56
     batch_size = 256
-    num_imgs = 61546
+    num_imgs = 585565
     num_class = 1650
     train_val = 'models/deepid/resnet/train_val.prototxt'
     solver = 'models/deepid/resnet/solver.prototxt'

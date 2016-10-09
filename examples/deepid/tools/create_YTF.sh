@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
-# Create the CASIA lmdb inputs
-# N.B. set the path to the CASIA train + val data dirs
+# Create the YTF lmdb inputs
+# N.B. set the path to the YTF train + val data dirs
 set -e
 
 # EXAMPLE=examples/deepid
@@ -8,8 +8,8 @@ DATA=data/YTF
 TOOLS=build/tools
 
 DATA_ROOT=data/YTF/
-TRAIN_TXT_PATH=data/YTF/aux
-VAL_TXT_PATH=data/YTF/aux
+TRAIN_TXT_PATH=data/YTF
+VAL_TXT_PATH=data/YTF
 
 # Set RESIZE=true to resize the images to 256x256. Leave as false if images have
 # already been resized using another tool.
@@ -39,22 +39,24 @@ fi
 
 echo "Creating train lmdb..."
 
-GLOG_logtostderr=1 $TOOLS/convert_imageset \
+GLOG_logtostderr=1 $TOOLS/convert_imageset_kps \
     --resize_height=$RESIZE_HEIGHT \
     --resize_width=$RESIZE_WIDTH \
     --shuffle \
     $DATA_ROOT \
     $TRAIN_TXT_PATH/train.txt \
-    $DATA/YTF_56x56_train_lmdb
+    $DATA/YTF_56x56_train_lmdb \
+    $DATA/YTF_56x56_train_kps_lmdb
 
 echo "Creating val lmdb..."
 
-GLOG_logtostderr=1 $TOOLS/convert_imageset \
+GLOG_logtostderr=1 $TOOLS/convert_imageset_kps \
     --resize_height=$RESIZE_HEIGHT \
     --resize_width=$RESIZE_WIDTH \
     --shuffle \
     $DATA_ROOT \
     $VAL_TXT_PATH/val.txt \
-    $DATA/YTF_56x56_val_lmdb
+    $DATA/YTF_56x56_val_lmdb \
+    $DATA/YTF_56x56_val_kps_lmdb
 
 echo "Done."

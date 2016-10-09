@@ -3,10 +3,10 @@ import numpy as np
 import Image
 import os
 
-files_det = pd.read_csv('DlibSeetaDet.txt', sep = ' ')
-files_ali = pd.read_csv('DlibSeetaAli.txt', sep = ' ')
-# files_det = pd.read_csv('Seeta+DlibSeetaDet.txt', sep = ' ')
-# files_ali = pd.read_csv('Seeta+DlibSeetaAli.txt', sep = ' ')
+# files_det = pd.read_csv('aux/DlibSeetaDet.txt', sep = ' ')
+# files_ali = pd.read_csv('aux/DlibSeetaAli.txt', sep = ' ')
+files_det = pd.read_csv('aux/Seeta+DlibSeetaDet.txt', sep = ' ')
+files_ali = pd.read_csv('aux/Seeta+DlibSeetaAli.txt', sep = ' ')
 sorted_det = files_det.sort(columns = 'img_id')
 # sorted_det.to_csv('DlibSeetaDetSorted.txt', sep = ' ', index = False)
 sorted_ali = files_ali.sort(columns = 'img_id')
@@ -17,6 +17,7 @@ num_persons = 1
 cnt_person = []
 cnt_person.append(0)
 cnt = 0
+per_th = 0.8
 # cnt_img = 0
 cnt_txt = 0
 images_person = []
@@ -106,7 +107,7 @@ for i in range(sorted_det['img_id'].count()):
             # assert(rm_y_crop >= 0 and rm_y_crop < height)
 
             r = np.random.uniform()
-            if r < 0.8:
+            if r < per_th:
                 cnt_txt += 1
                 ftrain.write(images_person[j] + ' ' + str(num_persons - 1) + '\n')
                 ftrainali.write(images_person[j] + ' ' +
@@ -115,7 +116,7 @@ for i in range(sorted_det['img_id'].count()):
                                 str(n_x_crop) + ' ' + str(n_y_crop) + ' ' +
                                 str(lm_x_crop) + ' ' + str(lm_y_crop) + ' ' +
                                 str(rm_x_crop) + ' ' + str(rm_y_crop) + '\n')
-            elif r < 0.9:
+            elif r < per_th + (1 - per_th) / 2:
                 cnt_txt += 1
                 fval.write(images_person[j] + ' ' + str(num_persons - 1) + '\n')
                 fvalali.write(images_person[j] + ' ' +
@@ -216,7 +217,7 @@ for j in range(num_images_person):
     # assert(rm_y_crop >= 0 and rm_y_crop < height)
 
     r = np.random.uniform()
-    if r < 0.8:
+    if r < per_th:
         cnt_txt += 1
         ftrain.write(images_person[j] + ' ' + str(num_persons - 1) + '\n')
         ftrainali.write(images_person[j] + ' ' +
@@ -225,7 +226,7 @@ for j in range(num_images_person):
                         str(n_x_crop) + ' ' + str(n_y_crop) + ' ' +
                         str(lm_x_crop) + ' ' + str(lm_y_crop) + ' ' +
                         str(rm_x_crop) + ' ' + str(rm_y_crop) + '\n')
-    elif r < 0.9:
+    elif r < per_th + (1 - per_th) / 2:
         cnt_txt += 1
         fval.write(images_person[j] + ' ' + str(num_persons - 1) + '\n')
         fvalali.write(images_person[j] + ' ' +

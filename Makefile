@@ -526,6 +526,11 @@ runtest: $(TEST_ALL_BIN)
 	$(TOOL_BUILD_DIR)/caffe
 	$(TEST_ALL_BIN) $(TEST_GPUID) --gtest_shuffle $(TEST_FILTER)
 
+TEST_KPS_BIN = $(TEST_BIN_DIR)/test_kps_layer.testbin
+runtest_kps: $(TEST_ALL_BIN)
+	$(TOOL_BUILD_DIR)/caffe
+	$(TEST_KPS_BIN) $(TEST_GPUID) --gtest_shuffle $(TEST_FILTER)
+
 pytest: py
 	cd python; python -m unittest discover -s caffe/test
 

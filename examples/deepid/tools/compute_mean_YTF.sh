@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# Create the CASIA train set mean binaryproto
+# Create the YTF train set mean binaryproto
 set -e
 
 DATA=data/YTF/YTF_56x56_train_lmdb
