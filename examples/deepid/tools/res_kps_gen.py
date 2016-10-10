@@ -17,7 +17,7 @@ def parse_args():
                         default = 'train_val.prototxt')
     parser.add_argument('--block_number', nargs='*',
                         help=('Block number for each stage.'),
-                        default=[1, 1, 1])
+                        default=[1, 1, 1, 1])
     parser.add_argument('--type', type=int,
                         help=('0 for deploy.prototxt, 1 for train_val.prototxt.'),
                         default=1)
@@ -89,7 +89,7 @@ layer {
     phase: TEST
   }
   data_param {
-    source: "%s/%s_%dx%d_test_kps_lmdb"
+    source: "%s/%s_%dx%d_val_kps_lmdb"
     batch_size: %d
     backend: LMDB
   }
@@ -499,7 +499,7 @@ def generate_kps_stage(stage, loc, kernel_num, last_top, network_str, args):
     return network_str, last_top
 
 
-def generate_train_val(num_classes, args, data_root, data_name, batch_size, pix, num_points):
+def generate_train_val(num_classes, args, data_root, data_name, batch_size, pix, num_points, has_full, begin_stage):
     network_str = generate_data_layer(data_root, data_name, batch_size, pix)
     if num_points > 0:
         network_str += generate_data_kps_layer(data_root, data_name, batch_size, pix)
@@ -510,9 +510,7 @@ def generate_train_val(num_classes, args, data_root, data_name, batch_size, pix,
     scale = float(1)
     network_str += generate_conv_bn_scale_layer(3, kernel_num, 2, 1, 'conv1', last_top, 'conv1')
     network_str += generate_activation_layer('conv1_relu', 'conv1', 'conv1', 'ReLU')
-    # network_str += generate_pooling_layer(3, 2, 'MAX', 'pool1', 'conv1', 'pool1')
     last_top = 'conv1'
-    scale /= 2
 
     last_tops = []
     scales = []
@@ -521,61 +519,90 @@ def generate_train_val(num_classes, args, data_root, data_name, batch_size, pix,
     '''stage 1'''
     network_str, last_top = generate_train_val_1st_stage(kernel_num, last_top, network_str, args)
     last_tops.append(last_top)
+    scale /= 2
     scales.append(scale)
     kernel_nums.append(kernel_num)
 
-    '''stage 2...'''
-    for s in range(1, len(args.block_number)):
-        kernel_num *= 2
-        #network_str, last_top = generate_train_val_stage(s + 1, kernel_num, last_top, network_str, args)
-        #last_tops.append(last_top)
-        scale /= 2
-        scales.append(scale)
-        kernel_nums.append(kernel_num)
-
-    scale = scales[-1]
-    last_top = last_tops[-1]
-    kernel_size_fc = pix*scale
-    kernel_num_fc = kernel_nums[-1]*2
-    #kernel_num_fc = kernel_nums[-1]
-    conv_full_name = 'fc_full'
-    #network_str += generate_conv_bn_scale_layer(kernel_size_fc, kernel_num_fc, 1, 0, conv_full_name, last_top, conv_full_name)
-    #network_str += generate_activation_layer('relu_full', conv_full_name, conv_full_name, 'ReLU')
     bottoms = []
-    #bottoms.append('fc_full')
 
-    stage = 1
-    kps_last_top = last_top
-    #stage = 2
-    #kps_last_top = last_tops[stage - 1]
-    kps_scale = scales[stage - 1]
-    kps_height = pix * kps_scale / 2
-    kps_width = pix * kps_scale / 2
-
-    for i in range(num_points):
-        kernel_num = kernel_nums[stage]
-        kps_layer_name = "kps%d"%(i+1)
-        network_str += generate_kps_layer(i, kps_height, kps_width, kps_scale, kps_layer_name, kps_last_top, kps_layer_name)
-        last_top = kps_layer_name
-        network_str, last_top = generate_kps_1st_stage(stage + 1, i, kernel_num, last_top, network_str, args)
-        for s in range(stage + 1, len(args.block_number)):
+    '''stage 2...'''
+    if has_full:
+        for s in range(1, len(args.block_number)):
             kernel_num *= 2
-            network_str, last_top = generate_kps_stage(s + 1, i, kernel_num, last_top, network_str, args)
-        conv_kps_name = 'fc_kps_%d'%(i+1)
-        network_str += generate_conv_bn_scale_layer(kernel_size_fc, kernel_num_fc, 1, 0, conv_kps_name, last_top, conv_kps_name)
-        network_str += generate_activation_layer('relu_kps_%d'%(i+1), conv_kps_name, conv_kps_name, 'ReLU')
-        bottoms.append(conv_kps_name)
+            kernel_nums.append(kernel_num)
+            network_str, last_top = generate_train_val_stage(s + 1, kernel_num, last_top, network_str, args)
+            last_tops.append(last_top)
+            scale /= 2
+            scales.append(scale)
+        scale = scales[-1]
+        kernel_size_fc = pix*scale
+        if kernel_size_fc != int(kernel_size_fc):
+            kernel_size_fc = kernel_size_fc + 1
+        kernel_num_fc = kernel_nums[-1] * 2
+        last_top = last_tops[-1]
+        conv_full_name = 'fc_full'
+        network_str += generate_conv_bn_scale_layer(kernel_size_fc, kernel_num_fc, 1, 0, conv_full_name, last_top, conv_full_name)
+        network_str += generate_activation_layer('relu_full', conv_full_name, conv_full_name, 'ReLU')
+        bottoms.append('fc_full')
+
+        kps_last_top = last_tops[begin_stage - 1]
+        kps_scale = scales[begin_stage - 1]
+        kps_height = pix * kps_scale / 2
+        kps_width = pix * kps_scale / 2
+        for i in range(num_points):
+            kps_layer_name = "kps%d"%(i+1)
+            network_str += generate_kps_layer(i, kps_height, kps_width, kps_scale, kps_layer_name, kps_last_top, kps_layer_name)
+            last_top = kps_layer_name
+            kernel_num = kernel_nums[begin_stage]
+            network_str, last_top = generate_kps_1st_stage(begin_stage + 1, i, kernel_num, last_top, network_str, args)
+            for s in range(begin_stage + 1, len(args.block_number)):
+                kernel_num *= 2
+                network_str, last_top = generate_kps_stage(s + 1, i, kernel_num, last_top, network_str, args)
+            conv_kps_name = 'fc_kps_%d'%(i+1)
+            network_str += generate_conv_bn_scale_layer(kernel_size_fc, kernel_num_fc, 1, 0, conv_kps_name, last_top, conv_kps_name)
+            network_str += generate_activation_layer('relu_kps_%d'%(i+1), conv_kps_name, conv_kps_name, 'ReLU')
+            bottoms.append(conv_kps_name)
+    else:
+        for s in range(1, begin_stage):
+            kernel_num *= 2
+            kernel_nums.append(kernel_num)
+            network_str, last_top = generate_train_val_stage(s + 1, kernel_num, last_top, network_str, args)
+            last_tops.append(last_top)
+            scale /= 2
+            scales.append(scale)
+
+        kps_last_top = last_top
+        kps_scale = scale
+        kps_height = pix * kps_scale / 2
+        kps_width = pix * kps_scale / 2
+        for i in range(num_points):
+            kernel_num = kernel_nums[-1] * 2
+            kps_layer_name = "kps%d"%(i+1)
+            network_str += generate_kps_layer(i, kps_height, kps_width, kps_scale, kps_layer_name, kps_last_top, kps_layer_name)
+            last_top = kps_layer_name
+            network_str, last_top = generate_kps_1st_stage(begin_stage + 1, i, kernel_num, last_top, network_str, args)
+            scale /= 2
+            for s in range(begin_stage + 1, len(args.block_number)):
+                kernel_num *= 2
+                network_str, last_top = generate_kps_stage(s + 1, i, kernel_num, last_top, network_str, args)
+                scale /= 2
+            kernel_size_fc = pix * scale
+            if kernel_size_fc != int(kernel_size_fc):
+                kernel_size_fc = kernel_size_fc + 1
+            kernel_num_fc = kernel_num * 2
+            conv_kps_name = 'fc_kps_%d'%(i+1)
+            network_str += generate_conv_bn_scale_layer(kernel_size_fc, kernel_num_fc, 1, 0, conv_kps_name, last_top, conv_kps_name)
+            network_str += generate_activation_layer('relu_kps_%d'%(i+1), conv_kps_name, conv_kps_name, 'ReLU')
+            bottoms.append(conv_kps_name)
 
     '''after stage'''
-    # network_str += generate_pooling_layer(7, 1, 'AVE', 'pool2', last_top, 'pool2')
-    # network_str += generate_fc_layer(kernel_num * 2, 'feature', last_top, 'feature', 'gaussian')
     network_str += generate_concat_layer(bottoms)
     # network_str += generate_dropout_layer('feature')
     network_str += generate_fc_layer(num_classes, 'fc', 'feature', 'fc', 'gaussian')
     network_str += generate_softmax_loss('fc')
     return network_str
 
-def generate_solver(train_val, batch_size, num_epochs, num_imgs_train, num_imgs_val):
+def generate_solver(train_val, batch_size, num_epochs, num_imgs_train, num_imgs_val, pix, has_full, has_kps, begin_stage, args):
     test_iter = num_imgs_val//(batch_size*4)+1
     max_iter = num_epochs*(num_imgs_train)//(batch_size*4)+1
     stepsize = max_iter//4
@@ -593,25 +620,32 @@ max_iter: %d
 momentum: 0.9
 weight_decay: 0.0001
 snapshot: %d
-snapshot_prefix: "models/deepid/resnet/resnet_kps"
-solver_mode: GPU'''%(train_val, test_iter, stepsize, max_iter, snap_shot)
+snapshot_prefix: "models/deepid/resnet/resnet_kps_p%dx%d_f%d_k%d_s%d_b'''%(train_val, test_iter, stepsize, max_iter, snap_shot, pix, pix, has_full, has_kps, begin_stage)
+    for i in range(len(args.block_number)):
+        solver_str += '%d'%args.block_number[i]
+        if i < len(args.block_number) - 1:
+            solver_str += 'x'
+    solver_str += '''"
+solver_mode: GPU'''
     return solver_str
 
 def main():
     args = parse_args()
-    data_root = 'data/YTF'
-    data_name = 'YTF'
+    data_root = 'data/Celeb'
+    data_name = 'Celeb'
     pix = 56
     num_points = 5
+    has_full = 0
+    begin_stage = 3
     batch_size = 256
     num_imgs_train = 495008
     num_imgs_val = 61510
     num_epochs = 20
     num_classes = 1650
-    train_val = 'models/deepid/resnet/train_val_kps_%s.prototxt'%data_name
-    solver = 'models/deepid/resnet/solver_kps_%s.prototxt'%data_name
-    solver_str = generate_solver(train_val, batch_size, num_epochs, num_imgs_train, num_imgs_val)
-    network_str = generate_train_val(num_classes, args, data_root, data_name, batch_size, pix, num_points)
+    train_val = 'models/deepid/resnet/train_val_kps.prototxt'
+    solver = 'models/deepid/resnet/solver_kps.prototxt'
+    solver_str = generate_solver(train_val, batch_size, num_epochs, num_imgs_train, num_imgs_val, pix, has_full, num_points>0, begin_stage, args)
+    network_str = generate_train_val(num_classes, args, data_root, data_name, batch_size, pix, num_points, has_full, begin_stage - 1)
     fp = open(solver, 'w')
     fp.write(solver_str)
     fp.close()

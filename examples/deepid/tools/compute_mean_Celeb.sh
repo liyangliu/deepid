@@ -1,10 +1,11 @@
 #!/usr/bin/env sh
-# Create the CASIA train set mean binaryproto
+# Create the Celeb train set mean binaryproto
 set -e
+SIZE=56
 
-DATA=data/YTF/YTF_112x112_train_lmdb
+DATA=data/Celeb/Celeb_${SIZE}x${SIZE}_train_lmdb
 TOOLS=build/tools
-MEANFILE=data/YTF/YTF_112x112_mean.binaryproto
+MEANFILE=data/Celeb/Celeb_${SIZE}x${SIZE}_mean.binaryproto
 
 echo "Computing train set mean..."
 

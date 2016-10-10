@@ -1,23 +1,24 @@
 #!/usr/bin/env sh
-# Create the CASIA lmdb inputs
-# N.B. set the path to the CASIA train + val data dirs
+# Create the Celeb lmdb inputs
+# N.B. set the path to the Celeb train + val data dirs
 set -e
 
 # EXAMPLE=examples/deepid
-DATA=data/YTF
+DATA=data/Celeb
 TOOLS=build/tools
 
-DATA_ROOT=data/YTF/
-TRAIN_TXT_PATH=data/YTF/aux
-VAL_TXT_PATH=data/YTF/aux
+DATA_ROOT=data/Celeb/
+TRAIN_TXT_PATH=data/Celeb
+VAL_TXT_PATH=data/Celeb
 
 # Set RESIZE=true to resize the images to 256x256. Leave as false if images have
 # already been resized using another tool.
 RESIZE=true
+SIZE=56
 
 if $RESIZE; then
-  RESIZE_HEIGHT=112
-  RESIZE_WIDTH=112
+  RESIZE_HEIGHT=$SIZE
+  RESIZE_WIDTH=$SIZE
 else
   RESIZE_HEIGHT=0
   RESIZE_WIDTH=0
@@ -25,36 +26,38 @@ fi
 
 if [ ! -d "$DATA_ROOT" ]; then
   echo "Error: TRAIN_DATA_ROOT is not a path to a directory: $TRAIN_DATA_ROOT"
-  echo "Set the TRAIN_DATA_ROOT variable in create_YTF.sh to the path" \
-       "where the YTF training data is stored."
+  echo "Set the TRAIN_DATA_ROOT variable in create_Celeb to the path" \
+       "where the Celeb training data is stored."
   exit 1
 fi
 
 if [ ! -d "$DATA_ROOT" ]; then
   echo "Error: VAL_DATA_ROOT is not a path to a directory: $VAL_DATA_ROOT"
-  echo "Set the VAL_DATA_ROOT variable in create_YTF.sh to the path" \
-       "where the YTF validation data is stored."
+  echo "Set the VAL_DATA_ROOT variable in create_Celeb.sh to the path" \
+       "where the Celeb validation data is stored."
   exit 1
 fi
 
 echo "Creating train lmdb..."
 
-GLOG_logtostderr=1 $TOOLS/convert_imageset \
+GLOG_logtostderr=1 $TOOLS/convert_imageset_kps \
     --resize_height=$RESIZE_HEIGHT \
     --resize_width=$RESIZE_WIDTH \
     --shuffle \
     $DATA_ROOT \
     $TRAIN_TXT_PATH/train.txt \
-    $DATA/YTF_112x112_train_lmdb
+    $DATA/Celeb_${SIZE}x${SIZE}_train_lmdb \
+    $DATA/Celeb_${SIZE}x${SIZE}_train_kps_lmdb
 
 echo "Creating val lmdb..."
 
-GLOG_logtostderr=1 $TOOLS/convert_imageset \
+GLOG_logtostderr=1 $TOOLS/convert_imageset_kps \
     --resize_height=$RESIZE_HEIGHT \
     --resize_width=$RESIZE_WIDTH \
     --shuffle \
     $DATA_ROOT \
     $VAL_TXT_PATH/val.txt \
-    $DATA/YTF_112x112_val_lmdb
+    $DATA/Celeb_${SIZE}x${SIZE}_val_lmdb \
+    $DATA/Celeb_${SIZE}x${SIZE}_val_kps_lmdb
 
 echo "Done."
