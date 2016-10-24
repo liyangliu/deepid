@@ -4,12 +4,15 @@
 set -e
 
 # EXAMPLE=examples/deepid
-DATA=data/Celeb
+DATASET=LFW
+DATA=data/${DATASET}
 TOOLS=build/tools
 
-DATA_ROOT=data/Celeb/
-TRAIN_TXT_PATH=data/Celeb
-VAL_TXT_PATH=data/Celeb
+DATA_ROOT=data/${DATASET}/
+TRAIN_TXT_PATH=data/${DATASET}/train_rep.txt
+VAL_TXT_PATH=data/${DATASET}/val_rep.txt
+
+#DATASET=${DATASET}_1703
 
 # Set RESIZE=true to resize the images to 256x256. Leave as false if images have
 # already been resized using another tool.
@@ -45,9 +48,9 @@ GLOG_logtostderr=1 $TOOLS/convert_imageset_kps \
     --resize_width=$RESIZE_WIDTH \
     --shuffle \
     $DATA_ROOT \
-    $TRAIN_TXT_PATH/train.txt \
-    $DATA/Celeb_${SIZE}x${SIZE}_train_lmdb \
-    $DATA/Celeb_${SIZE}x${SIZE}_train_kps_lmdb
+    $TRAIN_TXT_PATH \
+    $DATA/${DATASET}_${SIZE}x${SIZE}_rep_train_lmdb \
+    $DATA/${DATASET}_${SIZE}x${SIZE}_rep_train_kps_lmdb
 
 echo "Creating val lmdb..."
 
@@ -56,8 +59,8 @@ GLOG_logtostderr=1 $TOOLS/convert_imageset_kps \
     --resize_width=$RESIZE_WIDTH \
     --shuffle \
     $DATA_ROOT \
-    $VAL_TXT_PATH/val.txt \
-    $DATA/Celeb_${SIZE}x${SIZE}_val_lmdb \
-    $DATA/Celeb_${SIZE}x${SIZE}_val_kps_lmdb
+    $VAL_TXT_PATH \
+    $DATA/${DATASET}_${SIZE}x${SIZE}_rep_val_lmdb \
+    $DATA/${DATASET}_${SIZE}x${SIZE}_rep_val_kps_lmdb
 
 echo "Done."

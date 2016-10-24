@@ -4,7 +4,7 @@ import numpy as np
 # files_det = pd.read_csv('aux/DlibSeetaDet.txt', sep = ' ')
 # files_ali = pd.read_csv('aux/DlibSeetaAli.txt', sep = ' ')
 # files_det = pd.read_csv('aux/Seeta+DlibSeetaDet.txt', sep = ' ')
-files_ali = pd.read_csv('SeetaAli.txt', sep = ' ')
+files_ali = pd.read_csv('SeetaAli_1703.txt', sep = ' ')
 # sorted_det = files_det.sort(columns = 'img_id')
 # sorted_det.to_csv('DlibSeetaDetSorted.txt', sep = ' ', index = False)
 sorted_ali = files_ali.sort(columns = 'img_id')
@@ -21,10 +21,10 @@ cnt_txt = 0
 images_person = []
 images_person_ori = []
 
-# crop_root = 'aligned_crop_DB/'
+crop_root = 'Celeb/'
 ftrain = open(r'train.txt', 'w')
 fval = open(r'val.txt', 'w')
-ftest = open(r'test.txt', 'w')
+# fentity_id = open(r'entity_id.txt', 'w')
 
 # ftrainali = open(r'train_ali.txt', 'w')
 # fvalali = open(r'val_ali.txt', 'w')
@@ -33,14 +33,16 @@ ftest = open(r'test.txt', 'w')
 for i in range(sorted_ali['img_id'].count()):
     cnt += 1
     image = sorted_ali.iloc[i, 0]
-    # write_name = '/'.join(image.split('/')[1:])
-    # write_name = crop_root + write_name
+    write_name = '/'.join(image.split('/')[1:])
+    write_name = crop_root + write_name
     person = image.split('/')[1]
 
     if person != person_before:
         num_images_person = cnt_person[-1]
         assert(num_images_person == len(images_person))
         idx = int(np.sum(cnt_person[:-1]))
+
+        # fentity_id.write(person_before + ' ' + str(num_persons - 1) + '\n')
 
         for j in range(num_images_person):
             # left = sorted_det.iloc[j + idx, 1]
@@ -102,17 +104,9 @@ for i in range(sorted_ali['img_id'].count()):
                                 str(n_x_crop) + ' ' + str(n_y_crop) + ' ' +
                                 str(lm_x_crop) + ' ' + str(lm_y_crop) + ' ' +
                                 str(rm_x_crop) + ' ' + str(rm_y_crop) + '\n')
-            elif r < per_th + (1 - per_th) / 2:
-                cnt_txt += 1
-                fval.write(images_person[j] + ' ' + str(num_persons - 1) + ' ' +
-                                str(le_x_crop) + ' ' + str(le_y_crop) + ' ' +
-                                str(re_x_crop) + ' ' + str(re_y_crop) + ' ' +
-                                str(n_x_crop) + ' ' + str(n_y_crop) + ' ' +
-                                str(lm_x_crop) + ' ' + str(lm_y_crop) + ' ' +
-                                str(rm_x_crop) + ' ' + str(rm_y_crop) + '\n')
             else:
                 cnt_txt += 1
-                ftest.write(images_person[j] + ' ' + str(num_persons - 1) + ' ' +
+                fval.write(images_person[j] + ' ' + str(num_persons - 1) + ' ' +
                                 str(le_x_crop) + ' ' + str(le_y_crop) + ' ' +
                                 str(re_x_crop) + ' ' + str(re_y_crop) + ' ' +
                                 str(n_x_crop) + ' ' + str(n_y_crop) + ' ' +
@@ -137,6 +131,8 @@ for i in range(sorted_ali['img_id'].count()):
 num_images_person = cnt_person[-1]
 assert(num_images_person == len(images_person))
 idx = int(np.sum(cnt_person[:-1]))
+
+# fentity_id.write(person_before + ' ' + str(num_persons - 1) + '\n')
 
 for j in range(num_images_person):
     # left = sorted_det.iloc[j + idx, 1]
@@ -198,17 +194,9 @@ for j in range(num_images_person):
                         str(n_x_crop) + ' ' + str(n_y_crop) + ' ' +
                         str(lm_x_crop) + ' ' + str(lm_y_crop) + ' ' +
                         str(rm_x_crop) + ' ' + str(rm_y_crop) + '\n')
-    elif r < per_th + (1 - per_th) / 2:
-        cnt_txt += 1
-        fval.write(images_person[j] + ' ' + str(num_persons - 1) + ' ' +
-                        str(le_x_crop) + ' ' + str(le_y_crop) + ' ' +
-                        str(re_x_crop) + ' ' + str(re_y_crop) + ' ' +
-                        str(n_x_crop) + ' ' + str(n_y_crop) + ' ' +
-                        str(lm_x_crop) + ' ' + str(lm_y_crop) + ' ' +
-                        str(rm_x_crop) + ' ' + str(rm_y_crop) + '\n')
     else:
         cnt_txt += 1
-        ftest.write(images_person[j] + ' ' + str(num_persons - 1) + ' ' +
+        fval.write(images_person[j] + ' ' + str(num_persons - 1) + ' ' +
                         str(le_x_crop) + ' ' + str(le_y_crop) + ' ' +
                         str(re_x_crop) + ' ' + str(re_y_crop) + ' ' +
                         str(n_x_crop) + ' ' + str(n_y_crop) + ' ' +
@@ -224,4 +212,4 @@ print str(cnt), "images processed..."
 
 ftrain.close()
 fval.close()
-ftest.close()
+# fentity_id.close()

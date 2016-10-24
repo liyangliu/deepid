@@ -1,0 +1,15 @@
+net: "models/deepid/deepid/train_val.prototxt"
+test_iter: 51
+test_interval: 1000
+base_lr: 0.1
+momentum: 0.9
+weight_decay: 5e-3
+lr_policy: "step"
+stepsize: 8918
+gamma: 0.1
+display: 100
+max_iter: 35674
+test_initialization: false
+snapshot: 35674
+snapshot_prefix: "models/deepid/deepid"
+solver_mode: GPU

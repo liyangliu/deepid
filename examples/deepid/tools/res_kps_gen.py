@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
+import os
 
 def parse_args():
     """Parse input arguments
@@ -10,10 +11,10 @@ def parse_args():
                             formatter_class=ArgumentDefaultsHelpFormatter)
 
     parser.add_argument('--solver',
-                        help=('Output solver.prototxt file'),
+                        help=('Output solver.prototxt file.'),
                         default='solver.prototxt')
     parser.add_argument('--train_val',
-                        help=('Output train_val.prototxt file'),
+                        help=('Output train_val.prototxt file.'),
                         default = 'train_val.prototxt')
     parser.add_argument('--block_number', nargs='*',
                         help=('Block number for each stage.'),
@@ -21,6 +22,9 @@ def parse_args():
     parser.add_argument('--type', type=int,
                         help=('0 for deploy.prototxt, 1 for train_val.prototxt.'),
                         default=1)
+    parser.add_argument('--dataset',
+                        help=('Dataset used to train.'),
+                        default = 'Celeb')
 
     args = parser.parse_args()
     return args
@@ -36,7 +40,7 @@ layer {
     phase: TRAIN
   }
   transform_param {
-    mirror: true
+    mirror: false
     mean_file: "%s/%s_%dx%d_mean.binaryproto"
   }
   data_param {
@@ -236,7 +240,7 @@ def generate_concat_layer(bottoms):
   bottom: "%s"'''%bottoms[i]
     concat_layer_str += '''
   concat_param {
-    axis: 3
+    axis: 1
   }
 }
 '''
@@ -577,6 +581,7 @@ def generate_train_val(num_classes, args, data_root, data_name, batch_size, pix,
         kps_width = pix * kps_scale / 2
         for i in range(num_points):
             kernel_num = kernel_nums[-1] * 2
+            scale = scales[-1]
             kps_layer_name = "kps%d"%(i+1)
             network_str += generate_kps_layer(i, kps_height, kps_width, kps_scale, kps_layer_name, kps_last_top, kps_layer_name)
             last_top = kps_layer_name
@@ -598,7 +603,9 @@ def generate_train_val(num_classes, args, data_root, data_name, batch_size, pix,
     '''after stage'''
     network_str += generate_concat_layer(bottoms)
     # network_str += generate_dropout_layer('feature')
-    network_str += generate_fc_layer(num_classes, 'fc', 'feature', 'fc', 'gaussian')
+    kernel_num_compact = kernel_num_fc / 2
+    network_str += generate_fc_layer(kernel_num_fc/2, 'fc%d'%kernel_num_compact, 'feature', 'fc%d'%kernel_num_compact, 'gaussian')
+    network_str += generate_fc_layer(num_classes, 'fc_%s'%args.dataset, 'fc%d'%kernel_num_compact, 'fc', 'gaussian')
     network_str += generate_softmax_loss('fc')
     return network_str
 
@@ -620,31 +627,45 @@ max_iter: %d
 momentum: 0.9
 weight_decay: 0.0001
 snapshot: %d
-snapshot_prefix: "models/deepid/resnet/resnet_kps_p%dx%d_f%d_k%d_s%d_b'''%(train_val, test_iter, stepsize, max_iter, snap_shot, pix, pix, has_full, has_kps, begin_stage)
+snapshot_prefix: "models/deepid/resnet/kps/resnet_p%dx%d_f%d_k%d_s%d_b'''%(train_val, test_iter, stepsize, max_iter, snap_shot, pix, pix, has_full, has_kps, begin_stage)
     for i in range(len(args.block_number)):
         solver_str += '%d'%args.block_number[i]
         if i < len(args.block_number) - 1:
             solver_str += 'x'
-    solver_str += '''"
+    solver_str += '''/resnet_%s"'''%args.dataset
+    solver_str += '''
 solver_mode: GPU'''
+    path = os.path.dirname(solver_str.split('"')[-2])
+    if not os.path.exists(path):
+        os.makedirs(path)
     return solver_str
 
 def main():
     args = parse_args()
-    data_root = 'data/Celeb'
-    data_name = 'Celeb'
-    pix = 56
     num_points = 5
+
+    data_root = 'data/' + args.dataset
+    data_name = args.dataset
+    if args.dataset == 'Celeb_1703':
+        data_name = 'Celeb_1703'
+        data_root = 'data/Celeb'
+    ftrain = open(data_root+'/train.txt')
+    train_imgs = ftrain.readlines()
+    num_imgs_train = len(train_imgs)
+    num_classes = int(train_imgs[-1].split(' ')[1]) + 1
+    ftrain.close()
+    fval = open(data_root+'/val.txt')
+    num_imgs_val = len(fval.readlines())
+    fval.close()
+    num_epochs = 20
+
+    pix = 56
     has_full = 0
     begin_stage = 3
     batch_size = 256
-    num_imgs_train = 495008
-    num_imgs_val = 61510
-    num_epochs = 20
-    num_classes = 1650
-    train_val = 'models/deepid/resnet/train_val_kps.prototxt'
-    solver = 'models/deepid/resnet/solver_kps.prototxt'
-    solver_str = generate_solver(train_val, batch_size, num_epochs, num_imgs_train, num_imgs_val, pix, has_full, num_points>0, begin_stage, args)
+    train_val = 'models/deepid/resnet/kps/train_val.prototxt'
+    solver = 'models/deepid/resnet/kps/solver.prototxt'
+    solver_str = generate_solver(train_val, batch_size, num_epochs, num_imgs_train, num_imgs_val, pix, has_full, num_points, begin_stage, args)
     network_str = generate_train_val(num_classes, args, data_root, data_name, batch_size, pix, num_points, has_full, begin_stage - 1)
     fp = open(solver, 'w')
     fp.write(solver_str)

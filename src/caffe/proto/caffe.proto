@@ -306,7 +306,7 @@ message ParamSpec {
 // NOTE
 // Update the next available ID when you add a new LayerParameter field.
 //
-// LayerParameter next available layer-specific ID: 148 (last added: kps_param)
+// LayerParameter next available layer-specific ID: 149 (last added: kpsg_param)
 message LayerParameter {
   optional string name = 1; // the layer name
   optional string type = 2; // the layer type
@@ -382,6 +382,7 @@ message LayerParameter {
   optional InnerProductParameter inner_product_param = 117;
   optional InputParameter input_param = 143;
   optional KpsParameter kps_param = 147;
+  optional KpsgParameter kpsg_param = 148;
   optional LogParameter log_param = 134;
   optional LRNParameter lrn_param = 118;
   optional MemoryDataParameter memory_data_param = 119;
@@ -831,9 +832,15 @@ message InputParameter {
 
 message KpsParameter {
   optional uint32 kps_id = 1 [default = 0];
-  optional uint32 kps_height = 2 [default = 1];
-  optional uint32 kps_width = 3 [default = 1];
+  optional uint32 kps_height = 2 [default = 14];
+  optional uint32 kps_width = 3 [default = 14];
   optional float kps_scale = 4 [default = 1];
+}
+
+message KpsgParameter {
+  optional uint32 kpsg_height = 1 [default = 14];
+  optional uint32 kpsg_width = 2 [default = 14];
+  optional float kpsg_scale = 3 [default = 1];
 }
 
 // Message that stores parameters used by LogLayer
