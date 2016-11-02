@@ -531,6 +531,16 @@ runtest_kps: $(TEST_ALL_BIN)
 	$(TOOL_BUILD_DIR)/caffe
 	$(TEST_KPS_BIN) $(TEST_GPUID) --gtest_shuffle $(TEST_FILTER)
 
+TEST_KPSG_BIN = $(TEST_BIN_DIR)/test_kpsg_layer.testbin
+runtest_kpsg: $(TEST_ALL_BIN)
+	$(TOOL_BUILD_DIR)/caffe
+	$(TEST_KPSG_BIN) $(TEST_GPUID) --gtest_shuffle $(TEST_FILTER)
+
+TEST_CL_BIN = $(TEST_BIN_DIR)/test_center_loss_layer.testbin
+runtest_cl: $(TEST_ALL_BIN)
+	$(TOOL_BUILD_DIR)/caffe
+	$(TEST_CL_BIN) $(TEST_GPUID) --gtest_shuffle $(TEST_FILTER)
+
 pytest: py
 	cd python; python -m unittest discover -s caffe/test
 

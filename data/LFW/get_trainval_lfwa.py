@@ -11,13 +11,13 @@ sorted_ali = files_ali.sort(columns = 'img_id')
 # sorted_ali.to_csv('DlibSeetaAliSorted.txt', sep = ' ', index = False)
 
 person_label = {}
-pl = open(r'person_label.txt', 'w')
+pl = open(r'person_label_aug.txt', 'w')
 person_before = sorted_ali.iloc[0, 0].split('/')[1]
 num_persons = 1
 cnt_person = []
 cnt_person.append(0)
 cnt = 0
-cnt_img = 0
+# cnt_img = 0
 cnt_txt = 0
 images_person = []
 images_person_ori = []
@@ -29,7 +29,7 @@ if not cropped:
     sorted_det = files_det.sort(columns = 'img_id')
 
 crop_root = 'LFWA_crop/'
-ftrain = open(r'train.txt', 'w')
+# ftrain = open(r'train.txt', 'w')
 
 for i in range(sorted_ali['img_id'].count()):
     cnt += 1
@@ -75,15 +75,15 @@ for i in range(sorted_ali['img_id'].count()):
                 else:
                     height = min(height, h)
 
-                img = img[top : top + height, left : left + width, :]
-                img = Image.fromarray(img)
-                if not os.path.exists(os.path.dirname(images_person[j])):
-                    os.makedirs(os.path.dirname(images_person[j]))
-                    img.save(images_person[j])
-                    cnt_img += 1
-                else:
-                    img.save(images_person[j])
-                    cnt_img += 1
+                # img = img[top : top + height, left : left + width, :]
+                # img = Image.fromarray(img)
+                # if not os.path.exists(os.path.dirname(images_person[j])):
+                    # os.makedirs(os.path.dirname(images_person[j]))
+                    # img.save(images_person[j])
+                    # cnt_img += 1
+                # else:
+                    # img.save(images_person[j])
+                    # cnt_img += 1
 
                 le_x_crop = le_x - left
                 le_y_crop = le_y - top
@@ -133,12 +133,12 @@ for i in range(sorted_ali['img_id'].count()):
             if r <= per_th:
                 cnt_txt += 1
                 person_label[person_before] = num_persons - 1
-                ftrain.write(images_person[j] + ' ' + str(num_persons - 1) + ' ' +
-                                str(le_x_crop) + ' ' + str(le_y_crop) + ' ' +
-                                str(re_x_crop) + ' ' + str(re_y_crop) + ' ' +
-                                str(n_x_crop) + ' ' + str(n_y_crop) + ' ' +
-                                str(lm_x_crop) + ' ' + str(lm_y_crop) + ' ' +
-                                str(rm_x_crop) + ' ' + str(rm_y_crop) + '\n')
+                # ftrain.write(images_person[j] + ' ' + str(num_persons - 1) + ' ' +
+                                # str(le_x_crop) + ' ' + str(le_y_crop) + ' ' +
+                                # str(re_x_crop) + ' ' + str(re_y_crop) + ' ' +
+                                # str(n_x_crop) + ' ' + str(n_y_crop) + ' ' +
+                                # str(lm_x_crop) + ' ' + str(lm_y_crop) + ' ' +
+                                # str(rm_x_crop) + ' ' + str(rm_y_crop) + '\n')
             else:
                 cnt_txt += 1
         assert(j + 1 + idx == np.sum(cnt_person))
@@ -193,15 +193,15 @@ for j in range(num_images_person):
         else:
             height = min(height, h)
 
-        img = img[top : top + height, left : left + width, :]
-        img = Image.fromarray(img)
-        if not os.path.exists(os.path.dirname(images_person[j])):
-            os.makedirs(os.path.dirname(images_person[j]))
-            img.save(images_person[j])
-            cnt_img += 1
-        else:
-            img.save(images_person[j])
-            cnt_img += 1
+        # img = img[top : top + height, left : left + width, :]
+        # img = Image.fromarray(img)
+        # if not os.path.exists(os.path.dirname(images_person[j])):
+            # os.makedirs(os.path.dirname(images_person[j]))
+            # img.save(images_person[j])
+            # cnt_img += 1
+        # else:
+            # img.save(images_person[j])
+            # cnt_img += 1
 
         le_x_crop = le_x - left
         le_y_crop = le_y - top
@@ -252,24 +252,24 @@ for j in range(num_images_person):
     if r <= per_th:
         cnt_txt += 1
         person_label[person_before] = num_persons - 1
-        ftrain.write(images_person[j] + ' ' + str(num_persons - 1) + ' ' +
-                        str(le_x_crop) + ' ' + str(le_y_crop) + ' ' +
-                        str(re_x_crop) + ' ' + str(re_y_crop) + ' ' +
-                        str(n_x_crop) + ' ' + str(n_y_crop) + ' ' +
-                        str(lm_x_crop) + ' ' + str(lm_y_crop) + ' ' +
-                        str(rm_x_crop) + ' ' + str(rm_y_crop) + '\n')
+        # ftrain.write(images_person[j] + ' ' + str(num_persons - 1) + ' ' +
+                        # str(le_x_crop) + ' ' + str(le_y_crop) + ' ' +
+                        # str(re_x_crop) + ' ' + str(re_y_crop) + ' ' +
+                        # str(n_x_crop) + ' ' + str(n_y_crop) + ' ' +
+                        # str(lm_x_crop) + ' ' + str(lm_y_crop) + ' ' +
+                        # str(rm_x_crop) + ' ' + str(rm_y_crop) + '\n')
     else:
         cnt_txt += 1
 assert(j + 1 + idx == np.sum(cnt_person))
 
 assert(np.sum(cnt_person) == cnt)
 assert(cnt == sorted_ali['img_id'].count())
-assert(cnt_img == cnt)
+# assert(cnt_img == cnt)
 assert(cnt_txt == cnt)
 print str(cnt), "images processed..."
 
 for (k, v) in person_label.items():
     pl.write(k + ' ' + str(v) + '\n')
 
-ftrain.close()
+# ftrain.close()
 pl.close()

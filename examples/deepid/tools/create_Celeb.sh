@@ -4,24 +4,26 @@
 set -e
 
 # EXAMPLE=examples/deepid
-DATASET=LFW
+DATASET=CFW
 DATA=data/${DATASET}
 TOOLS=build/tools
 
-DATA_ROOT=data/${DATASET}/
-TRAIN_TXT_PATH=data/${DATASET}/train_rep.txt
-VAL_TXT_PATH=data/${DATASET}/val_rep.txt
+# DATA_ROOT=data/${DATASET}/
+DATA_ROOT=/
+TRAIN_TXT_PATH=data/${DATASET}/train.txt
+VAL_TXT_PATH=data/${DATASET}/val.txt
 
 #DATASET=${DATASET}_1703
 
 # Set RESIZE=true to resize the images to 256x256. Leave as false if images have
 # already been resized using another tool.
 RESIZE=true
-SIZE=56
+HEIGHT=112
+WIDTH=96
 
 if $RESIZE; then
-  RESIZE_HEIGHT=$SIZE
-  RESIZE_WIDTH=$SIZE
+  RESIZE_HEIGHT=$HEIGHT
+  RESIZE_WIDTH=$WIDTH
 else
   RESIZE_HEIGHT=0
   RESIZE_WIDTH=0
@@ -43,24 +45,24 @@ fi
 
 echo "Creating train lmdb..."
 
-GLOG_logtostderr=1 $TOOLS/convert_imageset_kps \
+GLOG_logtostderr=1 $TOOLS/convert_imageset \
     --resize_height=$RESIZE_HEIGHT \
     --resize_width=$RESIZE_WIDTH \
     --shuffle \
     $DATA_ROOT \
     $TRAIN_TXT_PATH \
-    $DATA/${DATASET}_${SIZE}x${SIZE}_rep_train_lmdb \
-    $DATA/${DATASET}_${SIZE}x${SIZE}_rep_train_kps_lmdb
+    $DATA/${DATASET}_${RESIZE_HEIGHT}x${RESIZE_WIDTH}_train_lmdb \
+    # $DATA/${DATASET}_${RESIZE_HEIGHT}x${RESIZE_WIDTH}_train_kps_lmdb
 
 echo "Creating val lmdb..."
 
-GLOG_logtostderr=1 $TOOLS/convert_imageset_kps \
+GLOG_logtostderr=1 $TOOLS/convert_imageset \
     --resize_height=$RESIZE_HEIGHT \
     --resize_width=$RESIZE_WIDTH \
     --shuffle \
     $DATA_ROOT \
     $VAL_TXT_PATH \
-    $DATA/${DATASET}_${SIZE}x${SIZE}_rep_val_lmdb \
-    $DATA/${DATASET}_${SIZE}x${SIZE}_rep_val_kps_lmdb
+    $DATA/${DATASET}_${RESIZE_HEIGHT}x${RESIZE_WIDTH}_val_lmdb \
+    # $DATA/${DATASET}_${RESIZE_HEIGHT}x${RESIZE_WIDTH}_val_kps_lmdb
 
 echo "Done."

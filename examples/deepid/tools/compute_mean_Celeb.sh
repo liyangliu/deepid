@@ -1,12 +1,13 @@
 #!/usr/bin/env sh
 # Create the Celeb train set mean binaryproto
 set -e
-SIZE=56
-DATASET=LFW
+SIZEH=112
+SIZEW=96
+DATASET=CFW
 
-DATA=data/${DATASET}/${DATASET}_${SIZE}x${SIZE}_rep_train_lmdb
+DATA=data/${DATASET}/${DATASET}_${SIZEH}x${SIZEW}_train_lmdb
 TOOLS=build/tools
-MEANFILE=data/${DATASET}/${DATASET}_${SIZE}x${SIZE}_rep_mean.binaryproto
+MEANFILE=data/${DATASET}/${DATASET}_${SIZEH}x${SIZEW}_mean.binaryproto
 
 echo "Computing train set mean..."
 

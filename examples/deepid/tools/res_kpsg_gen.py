@@ -664,38 +664,40 @@ solver_mode: GPU'''
 
 def main():
     args = parse_args()
-    num_points = 5
+    num_points = 0
 
     data_root = 'data/' + args.dataset
     data_name = args.dataset
     if args.dataset == 'Celeb_1703':
         data_name = 'Celeb_1703'
         data_root = 'data/Celeb'
-    ftrain = open(data_root+'/train.txt')
-    train_imgs = ftrain.readlines()
-    num_imgs_train = len(train_imgs)
-    num_classes = int(train_imgs[-1].split(' ')[1]) + 1
-    ftrain.close()
-    fval = open(data_root+'/val.txt')
-    num_imgs_val = len(fval.readlines())
-    fval.close()
+    # ftrain = open(data_root+'/train.txt')
+    # train_imgs = ftrain.readlines()
+    # num_imgs_train = len(train_imgs)
+    # num_classes = int(train_imgs[-1].split(' ')[1]) + 1
+    num_classes = 10
+    # ftrain.close()
+    # fval = open(data_root+'/val.txt')
+    # num_imgs_val = len(fval.readlines())
+    # fval.close()
     num_epochs = 20
 
-    group = num_points
-    # group = 1
-    dropout = 1
+    # group = num_points
+    group = 1
+    dropout = 0
 
     pix = 56
-    has_full = 0
+    # pix = 28
+    has_full = 1
     begin_stage = 3
     batch_size = 64
     train_val = 'models/deepid/resnet/kpsg/train_val.prototxt'
     solver = 'models/deepid/resnet/kpsg/solver.prototxt'
-    solver_str = generate_solver(train_val, batch_size, num_epochs, num_imgs_train, num_imgs_val, pix, has_full, num_points, begin_stage, args, group, dropout)
+    # solver_str = generate_solver(train_val, batch_size, num_epochs, num_imgs_train, num_imgs_val, pix, has_full, num_points, begin_stage, args, group, dropout)
     network_str = generate_train_val(num_classes, args, data_root, data_name, batch_size, pix, num_points, has_full, begin_stage - 1, group, dropout)
-    fp = open(solver, 'w')
-    fp.write(solver_str)
-    fp.close()
+    # fp = open(solver, 'w')
+    # fp.write(solver_str)
+    # fp.close()
     fp = open(train_val, 'w')
     fp.write(network_str)
     fp.close()

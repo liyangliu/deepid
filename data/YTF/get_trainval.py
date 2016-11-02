@@ -17,20 +17,22 @@ num_persons = 1
 cnt_person = []
 cnt_person.append(0)
 cnt = 0
-per_th = 0.8
+per_th = 0
 # cnt_img = 0
 cnt_txt = 0
 images_person = []
 images_person_ori = []
 
-crop_root = 'aligned_crop_DB/'
-ftrain = open(r'train.txt', 'w')
-fval = open(r'val.txt', 'w')
-ftest = open(r'test.txt', 'w')
+pl = open(r'person_label_aug.txt', 'r')
+person_label = {}
+for pll in pl.readlines():
+    p = pll.split(' ')[0]
+    l = pll.split(' ')[1]
+    person_label[p] = l
+pl.close()
 
-ftrainali = open(r'train_ali.txt', 'w')
-fvalali = open(r'val_ali.txt', 'w')
-ftestali = open(r'test_ali.txt', 'w')
+crop_root = 'aligned_crop_DB/'
+fval = open(r'val.txt', 'w')
 
 for i in range(sorted_det['img_id'].count()):
     cnt += 1
@@ -109,31 +111,21 @@ for i in range(sorted_det['img_id'].count()):
             r = np.random.uniform()
             if r < per_th:
                 cnt_txt += 1
-                ftrain.write(images_person[j] + ' ' + str(num_persons - 1) + '\n')
-                ftrainali.write(images_person[j] + ' ' +
-                                str(le_x_crop) + ' ' + str(le_y_crop) + ' ' +
-                                str(re_x_crop) + ' ' + str(re_y_crop) + ' ' +
-                                str(n_x_crop) + ' ' + str(n_y_crop) + ' ' +
-                                str(lm_x_crop) + ' ' + str(lm_y_crop) + ' ' +
-                                str(rm_x_crop) + ' ' + str(rm_y_crop) + '\n')
-            elif r < per_th + (1 - per_th) / 2:
-                cnt_txt += 1
-                fval.write(images_person[j] + ' ' + str(num_persons - 1) + '\n')
-                fvalali.write(images_person[j] + ' ' +
-                                str(le_x_crop) + ' ' + str(le_y_crop) + ' ' +
-                                str(re_x_crop) + ' ' + str(re_y_crop) + ' ' +
-                                str(n_x_crop) + ' ' + str(n_y_crop) + ' ' +
-                                str(lm_x_crop) + ' ' + str(lm_y_crop) + ' ' +
-                                str(rm_x_crop) + ' ' + str(rm_y_crop) + '\n')
+                # ftrain.write(images_person[j] + ' ' + str(num_persons - 1) + ' ' +
+                                # str(le_x_crop) + ' ' + str(le_y_crop) + ' ' +
+                                # str(re_x_crop) + ' ' + str(re_y_crop) + ' ' +
+                                # str(n_x_crop) + ' ' + str(n_y_crop) + ' ' +
+                                # str(lm_x_crop) + ' ' + str(lm_y_crop) + ' ' +
+                                # str(rm_x_crop) + ' ' + str(rm_y_crop) + '\n')
             else:
                 cnt_txt += 1
-                ftest.write(images_person[j] + ' ' + str(num_persons - 1) + '\n')
-                ftestali.write(images_person[j] + ' ' +
-                                str(le_x_crop) + ' ' + str(le_y_crop) + ' ' +
-                                str(re_x_crop) + ' ' + str(re_y_crop) + ' ' +
-                                str(n_x_crop) + ' ' + str(n_y_crop) + ' ' +
-                                str(lm_x_crop) + ' ' + str(lm_y_crop) + ' ' +
-                                str(rm_x_crop) + ' ' + str(rm_y_crop) + '\n')
+                if person_label.has_key(person_before):
+                    fval.write(images_person[j] + ' ' + person_label[person_before][:-1] + ' ' +
+                                    str(le_x_crop) + ' ' + str(le_y_crop) + ' ' +
+                                    str(re_x_crop) + ' ' + str(re_y_crop) + ' ' +
+                                    str(n_x_crop) + ' ' + str(n_y_crop) + ' ' +
+                                    str(lm_x_crop) + ' ' + str(lm_y_crop) + ' ' +
+                                    str(rm_x_crop) + ' ' + str(rm_y_crop) + '\n')
         assert(j + 1 + idx == np.sum(cnt_person))
 
         images_person = []
@@ -219,31 +211,21 @@ for j in range(num_images_person):
     r = np.random.uniform()
     if r < per_th:
         cnt_txt += 1
-        ftrain.write(images_person[j] + ' ' + str(num_persons - 1) + '\n')
-        ftrainali.write(images_person[j] + ' ' +
-                        str(le_x_crop) + ' ' + str(le_y_crop) + ' ' +
-                        str(re_x_crop) + ' ' + str(re_y_crop) + ' ' +
-                        str(n_x_crop) + ' ' + str(n_y_crop) + ' ' +
-                        str(lm_x_crop) + ' ' + str(lm_y_crop) + ' ' +
-                        str(rm_x_crop) + ' ' + str(rm_y_crop) + '\n')
-    elif r < per_th + (1 - per_th) / 2:
-        cnt_txt += 1
-        fval.write(images_person[j] + ' ' + str(num_persons - 1) + '\n')
-        fvalali.write(images_person[j] + ' ' +
-                        str(le_x_crop) + ' ' + str(le_y_crop) + ' ' +
-                        str(re_x_crop) + ' ' + str(re_y_crop) + ' ' +
-                        str(n_x_crop) + ' ' + str(n_y_crop) + ' ' +
-                        str(lm_x_crop) + ' ' + str(lm_y_crop) + ' ' +
-                        str(rm_x_crop) + ' ' + str(rm_y_crop) + '\n')
+        # ftrain.write(images_person[j] + ' ' + str(num_persons - 1) + ' ' +
+                        # str(le_x_crop) + ' ' + str(le_y_crop) + ' ' +
+                        # str(re_x_crop) + ' ' + str(re_y_crop) + ' ' +
+                        # str(n_x_crop) + ' ' + str(n_y_crop) + ' ' +
+                        # str(lm_x_crop) + ' ' + str(lm_y_crop) + ' ' +
+                        # str(rm_x_crop) + ' ' + str(rm_y_crop) + '\n')
     else:
         cnt_txt += 1
-        ftest.write(images_person[j] + ' ' + str(num_persons - 1) + '\n')
-        ftestali.write(images_person[j] + ' ' +
-                        str(le_x_crop) + ' ' + str(le_y_crop) + ' ' +
-                        str(re_x_crop) + ' ' + str(re_y_crop) + ' ' +
-                        str(n_x_crop) + ' ' + str(n_y_crop) + ' ' +
-                        str(lm_x_crop) + ' ' + str(lm_y_crop) + ' ' +
-                        str(rm_x_crop) + ' ' + str(rm_y_crop) + '\n')
+        if person_label.has_key(person_before):
+            fval.write(images_person[j] + ' ' + person_label[person_before][:-1] + ' ' +
+                            str(le_x_crop) + ' ' + str(le_y_crop) + ' ' +
+                            str(re_x_crop) + ' ' + str(re_y_crop) + ' ' +
+                            str(n_x_crop) + ' ' + str(n_y_crop) + ' ' +
+                            str(lm_x_crop) + ' ' + str(lm_y_crop) + ' ' +
+                            str(rm_x_crop) + ' ' + str(rm_y_crop) + '\n')
 assert(j + 1 + idx == np.sum(cnt_person))
 
 assert(np.sum(cnt_person) == cnt)
@@ -252,10 +234,4 @@ assert(cnt == sorted_det['img_id'].count())
 assert(cnt_txt == cnt)
 print str(cnt), "images processed..."
 
-ftrain.close()
 fval.close()
-ftest.close()
-
-ftrainali.close()
-fvalali.close()
-ftestali.close()

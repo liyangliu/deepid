@@ -1,0 +1,21 @@
+net: "examples/mnist/face_example/face_train_test.prototxt"
+test_iter: 100 
+test_interval: 20000
+test_initialization: false
+
+base_lr: 0.0001
+lr_policy: "multistep"
+gamma: 0.1
+
+stepvalue: 8000
+stepvalue: 12000
+stepvalue: 14000
+max_iter: 14000
+
+display: 10
+momentum: 0.9
+weight_decay: 0.0005
+snapshot: 14000
+snapshot_prefix: "examples/mnist/face_example/face_snapshot/face_train_test"
+
+solver_mode: GPU

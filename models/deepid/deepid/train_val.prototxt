@@ -22,7 +22,7 @@ layer {
   top: "label"
   type: "Data"
   data_param {
-    source: "data/LFW/LFW_56x56_val_lmdb"
+    source: "data/YTF/YTF_56x56_val_lmdb"
     backend: LMDB
     batch_size: 64
   }
