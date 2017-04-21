@@ -332,6 +332,7 @@ void CenterLossLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
     // caffe_gpu_mul(distance_mat_.count(), distance_mat_.gpu_data(), matI.gpu_data(), matI.mutable_gpu_data());
     // caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, M_, K_, M_ * N_, 1, Ib_.gpu_data(), matI.gpu_data(), 0., bottom[0]->mutable_gpu_diff());
     nthreads = M_ * K_;
+    caffe_gpu_set(M_ * K_, (Dtype)0., bottom[0]->mutable_gpu_diff());
     CenterLossBackward<Dtype><<<CAFFE_GET_BLOCKS(nthreads),
         CAFFE_CUDA_NUM_THREADS>>>(nthreads, scale.gpu_data(), N_, K_,
                 bottom[0]->gpu_data(), this->blobs_[0]->gpu_data(),
