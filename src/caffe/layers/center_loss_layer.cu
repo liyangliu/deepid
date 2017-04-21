@@ -239,6 +239,7 @@ __global__ void Compute_center_diff_gpu(int nthreads, const int M, const int K,
     }
     for (int k = 0; k < K; k++) {
       center_diff[index * K + k] = variation_sum[index * K + k] /(count + (Dtype)1.);
+      /*center_diff[index * K + k] = variation_sum[index * K + k] / count;*/
     }
   }
 }
@@ -288,6 +289,21 @@ void CenterLossLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
 }
 
 template <typename Dtype>
+__global__ void CenterLossBackward(int nthreads, const Dtype* scale_data,
+            const int N, const int K,
+            const Dtype* bottom_data, const Dtype* center_data,
+            Dtype* const bottom_diff) {
+  CUDA_KERNEL_LOOP(index, nthreads) {
+      int i = index / K;
+      int k = index % K;
+      scale_data += i * N;
+      for (int j = 0; j < N; j++) {
+          bottom_diff[index] += scale_data[j] * (bottom_data[index] - center_data[j*K+k]);
+      }
+  }
+}
+
+template <typename Dtype>
 void CenterLossLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
     const vector<bool>& propagate_down,
     const vector<Blob<Dtype>*>& bottom) {
@@ -307,13 +323,19 @@ void CenterLossLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
     // caffe_copy(mat_.count(), lij_.cpu_data(), scale.mutable_cpu_data());
     // Iij * lij / ||xi - cj||
     caffe_gpu_mul(mat_.count(), mat_.gpu_data(), scale.gpu_data(), scale.mutable_gpu_data());
-    Blob<Dtype> matI;
-    matI.ReshapeLike(distance_mat_);
+
+    // Blob<Dtype> matI;
+    // matI.ReshapeLike(distance_mat_);
     // [mat_ * scale, mat_ * scale, ..., mat_ * scale]
-    caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, M_ * N_, K_, 1, 1, scale.gpu_data(), Im_.gpu_data(), 0., matI.mutable_gpu_data());
+    // caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, M_ * N_, K_, 1, 1, scale.gpu_data(), Im_.gpu_data(), 0., matI.mutable_gpu_data());
     // (xi - cj) .* [mat_ * scale, mat_ * scale, ..., mat_ * scale]
-    caffe_gpu_mul(distance_mat_.count(), distance_mat_.gpu_data(), matI.gpu_data(), matI.mutable_gpu_data());
-    caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, M_, K_, M_ * N_, 1, Ib_.gpu_data(), matI.gpu_data(), 0., bottom[0]->mutable_gpu_diff());
+    // caffe_gpu_mul(distance_mat_.count(), distance_mat_.gpu_data(), matI.gpu_data(), matI.mutable_gpu_data());
+    // caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, M_, K_, M_ * N_, 1, Ib_.gpu_data(), matI.gpu_data(), 0., bottom[0]->mutable_gpu_diff());
+    nthreads = M_ * K_;
+    CenterLossBackward<Dtype><<<CAFFE_GET_BLOCKS(nthreads),
+        CAFFE_CUDA_NUM_THREADS>>>(nthreads, scale.gpu_data(), N_, K_,
+                bottom[0]->gpu_data(), this->blobs_[0]->gpu_data(),
+                bottom[0]->mutable_gpu_diff());
     caffe_gpu_scal(M_ * K_, top[0]->cpu_diff()[0] / M_, bottom[0]->mutable_gpu_diff());
   }
   if (propagate_down[1]) {
